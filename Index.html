@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Optimizer Pro - ATS Canada (Live Demo)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .input-field {
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            color: white;
+            border-radius: 12px;
+            padding: 16px;
+            width: 100%;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            resize: vertical;
+        }
+
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            outline: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #3b82f6 0deg, #10b981 var(--score-deg), rgba(255,255,255,0.1) var(--score-deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            width: 170px;
+            height: 170px;
+            background: #0f172a;
+            border-radius: 50%;
+        }
+
+        .score-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .score-number {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .keyword-tag {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 4px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tag-found { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag-missing { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .tag-job { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+        .progress-container {
+            margin: 16px 0;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .suggestion-critical { background: rgba(239, 68, 68, 0.15); border-left: 4px solid #ef4444; }
+        .suggestion-warning { background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; }
+        .suggestion-info { background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; }
+
+        .cv-preview {
+            background: white;
+            color: #1f2937;
+            padding: 30px;
+            border-radius: 12px;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .hidden { display: none !important; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            body { padding: 10px; }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tab.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .highlight {
+            background: rgba(16, 185, 129, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="display: inline-flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #3b82f6, #10b981); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold;">CV</div>
+            <div style="text-align: left;">
+                <h1 style="margin: 0; font-size: 32px; background: linear-gradient(135deg, #60a5fa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CV Optimizer Pro</h1>
+                <p style="margin: 0; color: #94a3b8; font-size: 14px;">Système ATS Canadien - Démo Interactive</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <!-- Left Column -->
+        <div>
+            <!-- Job Offer -->
+            <div class="glass-panel">
+                <h2 style="margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                    <span style="color: #60a5fa;">📋</span> 
+                    1. Offre d'emploi
+                    <span style="margin-left: auto; font-size: 12px; background: rgba(59,130,246,0.2); padding: 4px 12px; border-radius: 20px; color: #60a5fa;">Étape 1</span>
+                </h2>
+                <textarea id="jobOffer" class="input-field" rows="8" placeholder="Collez ici le texte de l'offre d'emploi canadienne...
+
+Exemple:
+Développeur Full Stack Senior - Montréal
+5+ ans d'expérience en Python, React, AWS
+Bilingue FR/EN requis
+Agile/Scrum, CI/CD
+Secret clearance un atout"></textarea>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                    <select id="province" class="input-field" style="height: 48px;">
+                        <option value="">Province</option>
+                        <option value="QC">Québec</option>
+                        <option value="ON">Ontario</option>
+                        <option value="BC">Colombie-Britannique</option>
+                        <option value="AB">Alberta</option>
+                    </select>
+                    <select id="jobType" class="input-field" style="height: 48px;">
+                        <option value="">Domaine</option>
+                        <option value="tech">Technologies</option>
+                        <option value="finance">Finance</option>
+                        <option value="health">Santé</option>
+                        <option value="engineering">Ingénierie</option>
+                    </select>
+                </div>
+                <button onclick="analyzeJob()" id="btnAnalyzeJob" class="btn" style="width: 100%; margin-top: 16px;">
+                    <span>🔍</span> Analyser l'offre
+                </button>
+            </div>
+
+            <!-- CV Input -->
+            <div class="glass-panel">
+                <h2 style="margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                    <span style="color: #34d399;">📄</span> 
+                    2. Votre CV
+                    <span style="margin-left: auto; font-size: 12px; background: rgba(16,185,129,0.2); padding: 4px 12px; border-radius: 20px; color: #34d399;">Étape 2</span>
+                </h2>
+                <div style="border: 2px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 30px; text-align: center; margin-bottom: 16px; cursor: pointer;" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" style="display: none;" accept=".txt,.doc,.docx" onchange="loadFile(this)">
+                    <div style="font-size: 40px; margin-bottom: 10px;">📁</div>
+                    <p style="margin: 0; color: #94a3b8; font-size: 14px;">Cliquez pour importer un fichier</p>
+                    <p style="margin: 5px 0 0; color: #64748b; font-size: 12px;">TXT, DOC, DOCX acceptés</p>
+                </div>
+                <textarea id="cvInput" class="input-field" rows="10" placeholder="Ou collez directement le texte de votre CV ici...
+
+Exemple:
+JEAN TREMBLAY
+Développeur Web | Montréal
+jean.tremblay@email.com | (514) 555-0123
+
+EXPÉRIENCE
+Développeur Web | Agence XYZ | 2020-2023
+- Création sites web JavaScript, HTML, CSS
+- Gestion de projet Agile
+
+COMPÉTENCES
+JavaScript, PHP, MySQL, Git"></textarea>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #64748b;">
+                    <span id="stats">0 mots</span>
+                    <span id="langDetect">Langue: -</span>
+                </div>
+            </div>
+
+            <!-- Action -->
+            <div class="glass-panel" style="text-align: center;">
+                <button onclick="fullAnalysis()" id="btnFullAnalysis" class="btn btn-success" style="width: 100%; font-size: 18px; padding: 18px;" disabled>
+                    <span>🚀</span> Lancer l'analyse complète
+                </button>
+                <p id="actionHint" style="margin: 10px 0 0; font-size: 13px; color: #64748b;">Remplissez les deux sections ci-dessus pour activer</p>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+            <!-- Score -->
+            <div class="glass-panel">
+                <h2 style="margin-top: 0; text-align: center;">Score de compatibilité ATS</h2>
+                <div class="score-display">
+                    <div class="score-circle" id="scoreCircle" style="--score-deg: 0deg;">
+                        <div class="score-content">
+                            <div class="score-number" id="scoreValue">0%</div>
+                            <div style="color: #94a3b8; font-size: 14px;">Match global</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
+                        <span style="color: #94a3b8;">Mots-clés techniques</span>
+                        <span id="scoreKeywords" style="color: #60a5fa; font-weight: 600;">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="barKeywords" style="width: 0%; background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
+                        <span style="color: #94a3b8;">Format & Structure</span>
+                        <span id="scoreFormat" style="color: #34d399; font-weight: 600;">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="barFormat" style="width: 0%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
+                        <span style="color: #94a3b8;">Contenu & Impact</span>
+                        <span id="scoreContent" style="color: #a78bfa; font-weight: 600;">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="barContent" style="width: 0%; background: linear-gradient(90deg, #8b5cf6, #a78bfa);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keywords -->
+            <div class="glass-panel">
+                <h3 style="margin-top: 0; font-size: 16px; color: #94a3b8; margin-bottom: 12px;">Mots-clés de l'offre</h3>
+                <div id="jobKeywords" style="margin-bottom: 20px;">
+                    <span style="color: #64748b; font-size: 14px; font-style: italic;">En attente d'analyse...</span>
+                </div>
+
+                <h3 style="font-size: 16px; color: #94a3b8; margin-bottom: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">Présents dans votre CV</h3>
+                <div id="cvKeywords" style="margin-bottom: 20px;">
+                    <span style="color: #64748b; font-size: 14px; font-style: italic;">-</span>
+                </div>
+
+                <h3 style="font-size: 16px; color: #f87171; margin-bottom: 12px;">❌ Manquants (prioritaires)</h3>
+                <div id="missingKeywords">
+                    <span style="color: #64748b; font-size: 14px; font-style: italic;">-</span>
+                </div>
+            </div>
+
+            <!-- Suggestions -->
+            <div class="glass-panel">
+                <h3 style="margin-top: 0; margin-bottom: 16px;">💡 Recommandations</h3>
+                <div id="suggestions">
+                    <div class="suggestion-item suggestion-info">
+                        <span>ℹ️</span>
+                        <span>Lancez l'analyse pour recevoir des recommandations personnalisées pour le marché canadien.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optimization Section -->
+    <div id="optimizationSection" class="hidden">
+        <div class="glass-panel">
+            <h2 style="margin-top: 0; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+                <span>🎯 Optimisation ATS Canadienne</span>
+                <div class="tabs">
+                    <div class="tab" onclick="setLevel('conservative')" id="tabConservative">Conservateur</div>
+                    <div class="tab active" onclick="setLevel('balanced')" id="tabBalanced">Équilibré</div>
+                    <div class="tab" onclick="setLevel('aggressive')" id="tabAggressive">Agressif</div>
+                </div>
+            </h2>
+
+            <div class="grid-2">
+                <div>
+                    <h4 style="color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Version Originale</h4>
+                    <div class="cv-preview" id="originalCV"></div>
+                </div>
+                <div>
+                    <h4 style="color: #34d399; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+                        Version Optimisée ATS
+                        <span id="improvementBadge" style="background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">+0%</span>
+                    </h4>
+                    <div class="cv-preview" id="optimizedCV" style="border: 2px solid #10b981;"></div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 24px;">
+                <button onclick="copyCV()" class="btn" style="background: #4b5563; margin-right: 12px;">
+                    <span>📋</span> Copier
+                </button>
+                <button onclick="downloadCV()" class="btn btn-success">
+                    <span>💾</span> Télécharger (.txt)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canadian Tips -->
+    <div class="glass-panel" style="margin-top: 20px;">
+        <h2 style="margin-top: 0;">🇨🇦 Spécificités du marché canadien</h2>
+        <div class="grid-2" style="margin-top: 16px;">
+            <div style="background: rgba(59,130,246,0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(59,130,246,0.3);">
+                <h4 style="color: #60a5fa; margin: 0 0 10px;">🗣️ Bilinguisme</h4>
+                <p style="margin: 0; font-size: 14px; color: #cbd5e1; line-height: 1.6;">Indiquez clairement <strong>"Bilingual (FR/EN)"</strong> avec niveau précis. Au Québec, mentionnez spécifiquement le français.</p>
+            </div>
+            <div style="background: rgba(16,185,129,0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(16,185,129,0.3);">
+                <h4 style="color: #34d399; margin: 0 0 10px;">🍁 Statut légal</h4>
+                <p style="margin: 0; font-size: 14px; color: #cbd5e1; line-height: 1.6;">Mentionnez <strong>"Canadian Citizen"</strong>, <strong>"Permanent Resident"</strong> ou <strong>"Work Permit"</strong>. C'est souvent un critère de filtrage.</p>
+            </div>
+            <div style="background: rgba(139,92,246,0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(139,92,246,0.3);">
+                <h4 style="color: #a78bfa; margin: 0 0 10px;">🔒 Habilitations</h4>
+                <p style="margin: 0; font-size: 14px; color: #cbd5e1; line-height: 1.6;">Pour emplois gouvernementaux: <strong>"Reliability Status"</strong> ou <strong>"Secret Clearance"</strong>. Indiquez si vous êtes éligible.</p>
+            </div>
+            <div style="background: rgba(245,158,11,0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.3);">
+                <h4 style="color: #fbbf24; margin: 0 0 10px;">📄 Format ATS</h4>
+                <p style="margin: 0; font-size: 14px; color: #cbd5e1; line-height: 1.6;">Utilisez des titres standard: <st
